@@ -1,8 +1,4 @@
-export interface Remapping {
-  context: string;
-  prefix: string;
-  target: string;
-}
+import { Remapping } from "./types.js";
 
 export function parseRemappingString(remapping: string): Remapping {
   let rest = remapping;
@@ -35,7 +31,7 @@ export function parseRemappingString(remapping: string): Remapping {
 
 export function selectBestRemapping<RemappingT extends Remapping>(
   fromSouceName: string,
-  importPath: string,
+  directImport: string,
   remappings: RemappingT[],
 ): RemappingT | undefined {
   let bestRemapping: RemappingT | undefined;
@@ -61,7 +57,7 @@ export function selectBestRemapping<RemappingT extends Remapping>(
       continue;
     }
 
-    if (!importPath.startsWith(remapping.prefix)) {
+    if (!directImport.startsWith(remapping.prefix)) {
       continue;
     }
 

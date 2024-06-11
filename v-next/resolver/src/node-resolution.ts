@@ -3,14 +3,14 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 
 export function resolve({
-  importPath,
+  toResolve,
   from,
 }: {
-  importPath: string;
+  toResolve: string;
   from: string;
 }): string | undefined {
   try {
-    return require.resolve(importPath, { paths: [from] });
+    return require.resolve(toResolve, { paths: [from] });
   } catch (e) {
     // ensure that this is MODULE_NOT_FOUND
     if (

@@ -11,13 +11,21 @@ import {
   readUtf8File,
 } from "@nomicfoundation/hardhat-utils/fs";
 
+import { resolve } from "./node-resolution.js";
 import {
-  Remapping,
   applyValidRemapping,
   parseRemappingString,
   selectBestRemapping,
 } from "./remappings.js";
-import { resolve } from "./resolve.js";
+import {
+  NpmPackageResolvedFile,
+  ProjectResolvedFile,
+  Remapping,
+  ResolvedFile,
+  ResolvedFileType,
+  ResolvedNpmPackage,
+  Resolver,
+} from "./types.js";
 
 // Things to note:
 //  - This resolver assumes that the root of the project is the folder with the
@@ -54,51 +62,15 @@ import { resolve } from "./resolve.js";
 // TODO: Windows and source names with \ instead of /
 // TODO: Forbid local direct imports to `npm/...`, and local fiels in `npm/`
 
-export enum ResolvedFileType {
-  PROJECT_FILE = "PROJECT_FILE",
-  REPOSITORY_PACKAGE_FILE = "REPOSITORY_FILE",
-  NPM_PACKGE_FILE = "NPM_PACKAGE_FILE",
-}
-
-interface ProjectResolvedFile {
-  type: ResolvedFileType.PROJECT_FILE;
-  sourceName: string;
-  path: string;
-  content: string;
-}
-
-interface NpmPackage {
-  name: string;
-  version: string;
-  rootPath: string;
-  rootSourceName: string;
-}
-
-interface NpmPackageResolvedFile {
-  type: ResolvedFileType.NPM_PACKGE_FILE;
-  sourceName: string;
-  path: string;
-  content: string;
-  package: NpmPackage;
-}
-
-export type ResolvedFile = ProjectResolvedFile | NpmPackageResolvedFile;
-
 interface UserRemapping {
   rawFormat: string;
   context: string;
   prefix: string;
   target: string;
-  targetNpmPackage?: NpmPackage;
+  targetNpmPackage?: ResolvedNpmPackage;
 }
 
 const PROJECT_ROOT_SOURCE_NAME_SENTINEL: unique symbol = Symbol();
-
-export interface Resolver {
-  resolveProjectFile(absoluteFilePath: string): Promise<ProjectResolvedFile>;
-  resolveImport(from: ResolvedFile, importPath: string): Promise<ResolvedFile>;
-  getRemappings(): Remapping[];
-}
 
 export class ResolverImplementation implements Resolver {
   readonly #projectRoot: string;
@@ -110,7 +82,7 @@ export class ResolverImplementation implements Resolver {
     string | typeof PROJECT_ROOT_SOURCE_NAME_SENTINEL, // The package's root sourceName
     Map<
       string, // The package that is being imported, as the package name in the import
-      NpmPackage | typeof PROJECT_ROOT_SOURCE_NAME_SENTINEL
+      ResolvedNpmPackage | typeof PROJECT_ROOT_SOURCE_NAME_SENTINEL
     >
   > = new Map();
 
@@ -128,7 +100,7 @@ export class ResolverImplementation implements Resolver {
   ): Promise<Resolver> {
     const userRemappings = await Promise.all(
       userRemappingStrings.map((remappingString) =>
-        validateAndResolveRemapping(projectRoot, remappingString),
+        validateAndResolveUserRemapping(projectRoot, remappingString),
       ),
     );
 
@@ -509,7 +481,9 @@ export class ResolverImplementation implements Resolver {
     );
 
     if (!dependenciesMap.has(parsedDirectImport.package)) {
-      let newDependency: NpmPackage | typeof PROJECT_ROOT_SOURCE_NAME_SENTINEL;
+      let newDependency:
+        | ResolvedNpmPackage
+        | typeof PROJECT_ROOT_SOURCE_NAME_SENTINEL;
 
       const baseResolutionDirectory =
         from.type === ResolvedFileType.PROJECT_FILE
@@ -518,7 +492,7 @@ export class ResolverImplementation implements Resolver {
 
       const packageJsonPath = resolve({
         from: baseResolutionDirectory,
-        importPath: parsedDirectImport.package + "/package.json",
+        toResolve: parsedDirectImport.package + "/package.json",
       });
 
       if (packageJsonPath === undefined) {
@@ -548,7 +522,7 @@ export class ResolverImplementation implements Resolver {
           ? "local"
           : packageJson.version;
 
-        const npmPackage: NpmPackage = {
+        const npmPackage: ResolvedNpmPackage = {
           name,
           version,
           rootPath: path.dirname(packageJsonPath),
@@ -839,7 +813,7 @@ export class ResolverImplementation implements Resolver {
   }: {
     from: ResolvedFile;
     importPath: string;
-    importedPackage: NpmPackage;
+    importedPackage: ResolvedNpmPackage;
     pathWithinThePackage: string;
   }): Promise<NpmPackageResolvedFile> {
     const sourceName = importedPackage.rootSourceName + pathWithinThePackage;
@@ -1005,7 +979,7 @@ export class ResolverImplementation implements Resolver {
   }
 }
 
-async function validateAndResolveRemapping(
+async function validateAndResolveUserRemapping(
   projectRoot: string,
   remappingString: string,
 ): Promise<UserRemapping> {
@@ -1031,7 +1005,7 @@ async function validateAndResolveRemapping(
 
   const dependencyPackageJsonPath = resolve({
     from: projectRoot,
-    importPath: `${packageName}/package.json`,
+    toResolve: `${packageName}/package.json`,
   });
 
   if (dependencyPackageJsonPath === undefined) {
@@ -1064,7 +1038,7 @@ async function validateAndResolveRemapping(
     }
   }
 
-  const npmPackage: NpmPackage = {
+  const npmPackage: ResolvedNpmPackage = {
     name: packageName,
     version: packageVersion,
     rootPath: path.dirname(dependencyPackageJsonPath),
