@@ -50,10 +50,7 @@ export function selectBestRemapping<RemappingT extends Remapping>(
       continue;
     }
 
-    if (
-      remapping.context !== undefined &&
-      fromSouceName.startsWith(remapping.context)
-    ) {
+    if (!fromSouceName.startsWith(remapping.context)) {
       continue;
     }
 
