@@ -313,6 +313,14 @@ describe("Resolver", () => {
             });
 
             it("Should treat files whose first directory exists in the project root as local imports, even if they don't exist", async () => {
+              assertResolvedProjectFile(
+                await resolver.resolveImport(
+                  contractsFileSol,
+                  "hardhat/File.sol",
+                ),
+                "hardhat/File.sol",
+              );
+
               await assertHardhatErrorAsync(
                 resolver.resolveImport(contractsFileSol, "npm/nope.sol"),
                 HardhatError.ERRORS.SOLIDITY.IMPORTED_FILE_DOESNT_EXIST,
@@ -328,7 +336,21 @@ describe("Resolver", () => {
         });
 
         describe("Imports of npm files", () => {
-          it.todo("Should always treat hardhat/console.sol as an npm file");
+          it("Should always treat hardhat/console.sol as an npm file", async () => {
+            const consoleSol = await resolver.resolveImport(
+              contractsFileSol,
+              "hardhat/console.sol",
+            );
+
+            assert.ok(
+              consoleSol.type === ResolvedFileType.NPM_PACKGE_FILE,
+              "hardhat/console.sol should be an npm package file",
+            );
+          });
+
+          it.todo("Should fail if the package is not installed");
+
+          it.todo("Should fail if the package uses package.json#exports");
 
           it.todo("Should validate that the files exist with the right casing");
 
