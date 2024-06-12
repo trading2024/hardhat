@@ -74,6 +74,7 @@ export const ERROR_CATEGORIES: {
     max: 1299,
     websiteTitle: "Plugin errors",
   },
+  SOLIDITY: { min: 1300, max: 1400, websiteTitle: "Solidity related errors" },
 };
 
 export const ERRORS = {
@@ -781,6 +782,37 @@ Please install a version of the peer dependency that meets the plugin's requirem
       messageTemplate: 'Plugin "{pluginId}" dependency could not be loaded.',
       websiteTitle: "Plugin dependency could not be loaded",
       websiteDescription: `The loading of a plugin's dependent plugin failed.`,
+    },
+  },
+  SOLIDITY: {
+    RESOLVING_INCORRECT_FILE_AS_PROJECT_FILE: {
+      number: 1300,
+      messageTemplate:
+        "File {file} is being resolved as a project file, but it's not part of the project.",
+      websiteTitle: "Solidity project file is outside the project",
+      websiteDescription: `Tried to resolve a file as a project file, but it's not part of the project.`,
+    },
+    RESOLVING_NONEXISTENT_PROJECT_FILE: {
+      number: 1301,
+      messageTemplate:
+        "File {file} is being resolved as a project file, but it doesn't exist.",
+      websiteTitle: "Solidity project file doesn't exist",
+      websiteDescription: `Tried to resolve a file as a project file, but it doesn't exist.`,
+    },
+    IMPORTED_FILE_DOESNT_EXIST: {
+      number: 1302,
+      messageTemplate: 'The import "{importPath} from "{from}" doesn\'t exist.',
+      websiteTitle: "Imported file doesn't exist",
+      websiteDescription: `An imported file doesn't exist.`,
+    },
+    IMPORTED_FILE_WITH_ICORRECT_CASING: {
+      number: 1303,
+      messageTemplate:
+        'The import "{importPath} from "{from}" exists, but its casing is incorrect. The correct casing is "{correctCasing}".',
+      websiteTitle: "Imported file with incorrect casing",
+      websiteDescription: `Hardhat enforces that you import your files with the correct casing (as stored in the filesystem).
+
+This error is thrown when you import a file with the wrong casing under a case insensitve filesystem.`,
     },
   },
 } as const;

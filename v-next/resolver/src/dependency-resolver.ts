@@ -1,6 +1,9 @@
 import path from "node:path";
 
-import { assertHardhatInvariant } from "@nomicfoundation/hardhat-errors";
+import {
+  HardhatError,
+  assertHardhatInvariant,
+} from "@nomicfoundation/hardhat-errors";
 import { ensureError } from "@nomicfoundation/hardhat-utils/error";
 import {
   FileNotFoundError,
@@ -11,7 +14,7 @@ import {
   readUtf8File,
 } from "@nomicfoundation/hardhat-utils/fs";
 
-import { resolve } from "./node-resolution.js";
+import { ResolutionError, resolve } from "./node-resolution.js";
 import {
   applyValidRemapping,
   parseRemappingString,
@@ -127,20 +130,28 @@ export class ResolverImplementation implements Resolver {
   public async resolveProjectFile(
     absoluteFilePath: string,
   ): Promise<ProjectResolvedFile> {
+    if (!absoluteFilePath.startsWith(this.#projectRoot)) {
+      throw new HardhatError(
+        HardhatError.ERRORS.SOLIDITY.RESOLVING_INCORRECT_FILE_AS_PROJECT_FILE,
+        {
+          file: this.#userFriendlyPath(absoluteFilePath),
+        },
+      );
+    }
+
     const relativeFilePath = path.relative(this.#projectRoot, absoluteFilePath);
 
-    const sourceName = relativeFilePath;
+    // Contrary to imports, it's fine if we don't have the right casing here.
+    //
+    // The cache may be less effetive if the casing was wrong, but as most of
+    // the time these absolute paths are read from the file system, they'd have
+    // the right casing in general.
+    let sourceName = relativeFilePath;
     const cached = this.#cacheBySourceName.get(sourceName);
     if (cached !== undefined) {
       /* eslint-disable-next-line @typescript-eslint/consistent-type-assertions --
       The cache is type-unsafe, but we are sure this is a ProjectResolvedFile */
       return cached as ProjectResolvedFile;
-    }
-
-    if (!absoluteFilePath.startsWith(this.#projectRoot)) {
-      throw new Error(
-        `Trying to resolve project file ${absoluteFilePath}, but it's not within the project`,
-      );
     }
 
     let trueCasePath: string;
@@ -149,25 +160,30 @@ export class ResolverImplementation implements Resolver {
     } catch (error) {
       ensureError(error, FileNotFoundError);
 
-      throw new Error(
-        `Project file doesn't exist: ${this.#userFriendlyPath(absoluteFilePath)}`,
-        {
-          cause: error,
-        },
+      throw new HardhatError(
+        HardhatError.ERRORS.SOLIDITY.RESOLVING_NONEXISTENT_PROJECT_FILE,
+        { file: this.#userFriendlyPath(absoluteFilePath) },
+        error,
       );
     }
 
-    if (trueCasePath !== relativeFilePath) {
-      throw new Error(
-        `Trying to resolve local file ${absoluteFilePath} with invalid casing, it should be ${path.join(this.#projectRoot, trueCasePath)}`,
-      );
+    sourceName = trueCasePath;
+
+    // Maybe it was cached with the right casing
+    const cachedWithTheRightCasing = this.#cacheBySourceName.get(sourceName);
+    if (cachedWithTheRightCasing !== undefined) {
+      /* eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      -- If it was, it's a ProjectResolvedFile */
+      return cachedWithTheRightCasing as ProjectResolvedFile;
     }
+
+    const pathWithTheRightCasing = path.join(this.#projectRoot, trueCasePath);
 
     const resolvedFile: ProjectResolvedFile = {
       type: ResolvedFileType.PROJECT_FILE,
       sourceName,
-      path: absoluteFilePath,
-      content: await readUtf8File(absoluteFilePath),
+      path: pathWithTheRightCasing,
+      content: await readUtf8File(pathWithTheRightCasing),
     };
 
     this.#cacheBySourceName.set(sourceName, resolvedFile);
@@ -342,18 +358,21 @@ export class ResolverImplementation implements Resolver {
       }
 
       if (
-        await this.#isDirectImportLocal(this.#projectRoot, remappedDirectImport)
+        !(await this.#isDirectImportLocal(
+          this.#projectRoot,
+          remappedDirectImport,
+        ))
       ) {
-        return this.#resolveImportToProjectFile({
-          from,
-          importPath,
-          pathWithinTheProject: remappedDirectImport,
-        });
+        throw new Error(
+          `Applying the remapping "${bestUserRemapping.rawFormat}" to the import ${importPath} from ${this.#userFriendlyPath(from.path)} results in an invalid import ${remappedDirectImport}, as it's not a local files. If you are trying to remap into an npm module use the npm/ syntax instead.`,
+        );
       }
 
-      throw new Error(
-        `Applying the remapping "${bestUserRemapping.rawFormat}" to the import ${importPath} from ${this.#userFriendlyPath(from.path)} results in an invalid import ${remappedDirectImport}, as it's not a local files. If you are trying to remap into an npm module use the npm/ syntax instead.`,
-      );
+      return this.#resolveImportToProjectFile({
+        from,
+        importPath,
+        pathWithinTheProject: remappedDirectImport,
+      });
     }
 
     if (await this.#isDirectImportLocal(this.#projectRoot, directImport)) {
@@ -490,12 +509,12 @@ export class ResolverImplementation implements Resolver {
           ? this.#projectRoot
           : from.package.rootPath;
 
-      const packageJsonPath = resolve({
+      const packageJsonResolution = resolve({
         from: baseResolutionDirectory,
         toResolve: parsedDirectImport.package + "/package.json",
       });
 
-      if (packageJsonPath === undefined) {
+      if (packageJsonResolution === ResolutionError.MODULE_NOT_FOUND) {
         if (from.type === ResolvedFileType.PROJECT_FILE) {
           throw new Error(
             `Import "${importPath}" from "${this.#userFriendlyPath(from.path)}" can't be resolved because the package "${parsedDirectImport.package}" is not installed`,
@@ -506,6 +525,14 @@ export class ResolverImplementation implements Resolver {
           `Import "${importPath}" from "${this.#userFriendlyPath(from.path)}" can't be resolved because the package "${parsedDirectImport.package}" is not installed for "${from.package.name}@${from.package.version}"`,
         );
       }
+
+      if (packageJsonResolution === ResolutionError.NOT_EXPORTED) {
+        throw new Error(
+          `Import "${importPath}" from "${this.#userFriendlyPath(from.path)}" can't be resolved because the package "${parsedDirectImport.package}" uses package.json#exports and hardhat doesn't support it`,
+        );
+      }
+
+      const packageJsonPath = packageJsonResolution.absolutePath;
 
       const packageJson = await readJsonFile<{ name: string; version: string }>(
         packageJsonPath,
@@ -926,15 +953,21 @@ export class ResolverImplementation implements Resolver {
     } catch (error) {
       ensureError(error, FileNotFoundError);
 
-      throw new Error(
-        `Import ${importPath} from ${this.#userFriendlyPath(from.path)} not found`,
-        { cause: error },
+      throw new HardhatError(
+        HardhatError.ERRORS.SOLIDITY.IMPORTED_FILE_DOESNT_EXIST,
+        { importPath, from: this.#userFriendlyPath(from.path) },
+        error,
       );
     }
 
     if (relativePathToValidate !== trueCasePath) {
-      throw new Error(
-        `Import ${importPath} from ${this.#userFriendlyPath(from.path)} has an incorrect casing. Try importing ${trueCasePath} instead.`,
+      throw new HardhatError(
+        HardhatError.ERRORS.SOLIDITY.IMPORTED_FILE_WITH_ICORRECT_CASING,
+        {
+          importPath,
+          from: this.#userFriendlyPath(from.path),
+          correctCasing: trueCasePath,
+        },
       );
     }
   }
@@ -1003,14 +1036,23 @@ async function validateAndResolveUserRemapping(
 
   const { packageName, packageVersion } = parsed;
 
-  const dependencyPackageJsonPath = resolve({
+  const dependencyPackageJsonResolution = resolve({
     from: projectRoot,
     toResolve: `${packageName}/package.json`,
   });
 
-  if (dependencyPackageJsonPath === undefined) {
+  if (dependencyPackageJsonResolution === ResolutionError.MODULE_NOT_FOUND) {
     throw new Error(`The package ${packageName} is not installed`);
   }
+
+  if (dependencyPackageJsonResolution === ResolutionError.NOT_EXPORTED) {
+    throw new Error(
+      `The package ${packageName} uses package.json#exports and hardhat doesn't support it`,
+    );
+  }
+
+  const dependencyPackageJsonPath =
+    dependencyPackageJsonResolution.absolutePath;
 
   if (isPackageJsonFromMonorepo(dependencyPackageJsonPath, projectRoot)) {
     if (packageVersion !== "local") {

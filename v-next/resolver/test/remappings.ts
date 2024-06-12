@@ -104,17 +104,21 @@ describe("Remappings", () => {
     describe("With context", () => {
       it("Should select the remapping with the longest context whose prefix also matches", () => {
         const best = selectBestRemapping("from.sol", "directImport.sol", [
-          { context: "f", prefix: "d", target: "1" },
-          { context: "fr", prefix: "d", target: "2" },
+          { context: "", prefix: "d", target: "1" },
+          { context: "f", prefix: "d", target: "2" },
+          { context: "fr", prefix: "d", target: "3" },
+          { context: "fr", prefix: "not", target: "4" },
+          { context: "f", prefix: "d", target: "5" },
         ]);
 
-        assert.deepEqual(best, { context: "fr", prefix: "d", target: "2" });
+        assert.deepEqual(best, { context: "fr", prefix: "d", target: "3" });
       });
 
       it("If multiple match the context with equal length, select the remapping with the longest prefix that matches", () => {
         const best = selectBestRemapping("from.sol", "directImport.sol", [
           { context: "fr", prefix: "d", target: "1" },
           { context: "fr", prefix: "di", target: "2" },
+          { context: "fr", prefix: "d", target: "3" },
         ]);
 
         assert.deepEqual(best, { context: "fr", prefix: "di", target: "2" });
