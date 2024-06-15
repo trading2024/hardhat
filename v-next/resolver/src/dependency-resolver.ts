@@ -233,13 +233,14 @@ export class ResolverImplementation implements Resolver {
   }
 
   public getRemappings(): Remapping[] {
-    const remappings = this.#userRemappings.map((remapping) => ({
+    const userRemappings = this.#userRemappings.map((remapping) => ({
       context: remapping.context,
       prefix: remapping.prefix,
       target: remapping.target,
     }));
 
-    // TODO: Always order this in a consistent way
+    const remappings: Remapping[] = [];
+
     for (const [
       fromPackageSourceName,
       dependenciesMap,
@@ -290,7 +291,17 @@ export class ResolverImplementation implements Resolver {
       }
     }
 
-    return remappings;
+    // We sort the remappings acording to the remappings selection rules, plus
+    // the targets, which shouldn't be needed.
+    remappings
+      .sort((a, b) => a.target.localeCompare(b.target))
+      .sort((a, b) => a.target.length - b.target.length)
+      .sort((a, b) => a.prefix.localeCompare(b.prefix))
+      .sort((a, b) => a.prefix.length - b.prefix.length)
+      .sort((a, b) => a.context.localeCompare(b.context))
+      .sort((a, b) => a.context.length - b.context.length);
+
+    return [...userRemappings, ...remappings];
   }
 
   // >>>>>>>>>> BEGIN SECTION: Import resolution selection
@@ -515,20 +526,19 @@ export class ResolverImplementation implements Resolver {
       });
 
       if (packageJsonResolution === ResolutionError.MODULE_NOT_FOUND) {
-        if (from.type === ResolvedFileType.PROJECT_FILE) {
-          throw new Error(
-            `Import "${importPath}" from "${this.#userFriendlyPath(from.path)}" can't be resolved because the package "${parsedDirectImport.package}" is not installed`,
-          );
-        }
-
-        throw new Error(
-          `Import "${importPath}" from "${this.#userFriendlyPath(from.path)}" can't be resolved because the package "${parsedDirectImport.package}" is not installed for "${from.package.name}@${from.package.version}"`,
+        throw new HardhatError(
+          HardhatError.ERRORS.SOLIDITY.IMPORTED_NPM_DEPENDENCY_NOT_INSTALLED,
+          {
+            from: this.#userFriendlyPath(from.path),
+            importPath,
+          },
         );
       }
 
       if (packageJsonResolution === ResolutionError.NOT_EXPORTED) {
-        throw new Error(
-          `Import "${importPath}" from "${this.#userFriendlyPath(from.path)}" can't be resolved because the package "${parsedDirectImport.package}" uses package.json#exports and hardhat doesn't support it`,
+        throw new HardhatError(
+          HardhatError.ERRORS.SOLIDITY.IMPORTED_NPM_DEPENDENCY_THAT_USES_EXPORTS,
+          { from: this.#userFriendlyPath(from.path), importPath },
         );
       }
 
@@ -757,7 +767,7 @@ export class ResolverImplementation implements Resolver {
       absolutePathToValidateFrom: from.package.rootPath,
     });
 
-    const filePath = path.join(from.package.rootPath, directImport);
+    const filePath = path.join(from.package.rootPath, relativePath);
 
     const resolvedFile: NpmPackageResolvedFile = {
       type: ResolvedFileType.NPM_PACKGE_FILE,
@@ -914,7 +924,7 @@ export class ResolverImplementation implements Resolver {
       return directImport;
     }
 
-    const firstDirectory = directImport.substring(0, slash);
+    const firstDirectory = directImport.substring(0, slash + 1);
 
     return firstDirectory;
   }

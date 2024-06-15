@@ -814,5 +814,20 @@ Please install a version of the peer dependency that meets the plugin's requirem
 
 This error is thrown when you import a file with the wrong casing under a case insensitve filesystem.`,
     },
+    IMPORTED_NPM_DEPENDENCY_NOT_INSTALLED: {
+      number: 1304,
+      messageTemplate:
+        'The import "{importPath}" from "{from}" is trying to use an uinstalled npm dependency.',
+      websiteTitle: "Uninstaleld npm solidity dependency",
+      websiteDescription: `One of your files is traying to import a dependency using npm, but it hasn't been installed`,
+    },
+    IMPORTED_NPM_DEPENDENCY_THAT_USES_EXPORTS: {
+      number: 1305,
+      messageTemplate:
+        'The import "{importPath}" from "{from}" is trying to use an npm dependency that uses pacakge#exports, which is not supported by Hardhat.',
+      websiteTitle:
+        "Using a npm solidity dependency with pacakge.json#exports is not supported",
+      websiteDescription: `One of your files is traying to import a dependency using npm, but it uses pacakge.json#exports, which Hardhat doesn't support`,
+    },
   },
 } as const;
