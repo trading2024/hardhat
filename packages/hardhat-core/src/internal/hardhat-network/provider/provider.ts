@@ -184,7 +184,7 @@ export class EdrProviderWrapper
     },
     private readonly _eventAdapter: EdrProviderEventAdapter,
     private readonly _vmTraceDecoder: VmTraceDecoder,
-    private readonly _rawTraceCallbacks: RawTraceCallbacks,
+    private readonly _vmTracer: VMTracer | undefined,
     // The common configuration for EthereumJS VM is not used by EDR, but tests expect it as part of the provider.
     private readonly _common: Common,
     tracingConfig?: TracingConfig
@@ -199,8 +199,8 @@ export class EdrProviderWrapper
   public static async create(
     config: HardhatNetworkProviderConfig,
     loggerConfig: LoggerConfig,
-    rawTraceCallbacks: RawTraceCallbacks,
-    tracingConfig?: TracingConfig
+    tracingConfig?: TracingConfig,
+    vmTracer?: VMTracer
   ): Promise<EdrProviderWrapper> {
     const { Provider } = requireNapiRsModule(
       "@nomicfoundation/edr"
@@ -322,7 +322,7 @@ export class EdrProviderWrapper
       minimalEthereumJsNode,
       eventAdapter,
       vmTraceDecoder,
-      rawTraceCallbacks,
+      vmTracer,
       common,
       tracingConfig
     );
@@ -368,9 +368,7 @@ export class EdrProviderWrapper
     const needsTraces =
       this._node._vm.evm.events.eventNames().length > 0 ||
       this._node._vm.events.eventNames().length > 0 ||
-      this._rawTraceCallbacks.onStep !== undefined ||
-      this._rawTraceCallbacks.onAfterMessage !== undefined ||
-      this._rawTraceCallbacks.onBeforeMessage !== undefined;
+      this._vmTracer !== undefined;
 
     if (needsTraces) {
       const rawTraces = responseObject.traces;
@@ -391,9 +389,8 @@ export class EdrProviderWrapper
                 edrTracingStepToMinimalInterpreterStep(traceItem)
               );
             }
-            if (this._rawTraceCallbacks.onStep !== undefined) {
-              await this._rawTraceCallbacks.onStep(traceItem);
-            }
+
+            this._vmTracer?.addStep(traceItem);
           }
           // afterMessage event
           else if ("executionResult" in traceItem) {
@@ -403,11 +400,8 @@ export class EdrProviderWrapper
                 edrTracingMessageResultToMinimalEVMResult(traceItem)
               );
             }
-            if (this._rawTraceCallbacks.onAfterMessage !== undefined) {
-              await this._rawTraceCallbacks.onAfterMessage(
-                traceItem.executionResult
-              );
-            }
+
+            this._vmTracer?.addAfterMessage(traceItem.executionResult);
           }
           // beforeMessage event
           else {
@@ -417,9 +411,8 @@ export class EdrProviderWrapper
                 edrTracingMessageToMinimalMessage(traceItem)
               );
             }
-            if (this._rawTraceCallbacks.onBeforeMessage !== undefined) {
-              await this._rawTraceCallbacks.onBeforeMessage(traceItem);
-            }
+
+            this._vmTracer?.addBeforeMessage(traceItem);
           }
         }
 
@@ -479,6 +472,11 @@ export class EdrProviderWrapper
     } else {
       return response.result;
     }
+  }
+
+  /** Used for internal stack traces integration tests. Only defined there. */
+  public vmTracer(): VMTracer | undefined {
+    return this._vmTracer;
   }
 
   // temporarily added to make smock work with HH+EDR
@@ -585,11 +583,11 @@ export class EdrProviderWrapper
     const trace = rawTrace.trace();
     for (const traceItem of trace) {
       if ("pc" in traceItem) {
-        await vmTracer.addStep(traceItem);
+        vmTracer.addStep(traceItem);
       } else if ("executionResult" in traceItem) {
-        await vmTracer.addAfterMessage(traceItem.executionResult);
+        vmTracer.addAfterMessage(traceItem.executionResult);
       } else {
-        await vmTracer.addBeforeMessage(traceItem);
+        vmTracer.addBeforeMessage(traceItem);
       }
     }
 
@@ -631,7 +629,6 @@ export async function createHardhatNetworkProvider(
   return EdrProviderWrapper.create(
     hardhatNetworkProviderConfig,
     loggerConfig,
-    {},
     await makeTracingConfig(artifacts)
   );
 }
