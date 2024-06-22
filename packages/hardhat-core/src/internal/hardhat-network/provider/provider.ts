@@ -12,12 +12,9 @@ import type {
 import type {
   EdrContext,
   Provider as EdrProviderT,
-  ExecutionResult,
   RawTrace,
   Response,
   SubscriptionEvent,
-  TracingMessage,
-  TracingStep,
 } from "@nomicfoundation/edr";
 import { Common } from "@nomicfoundation/ethereumjs-common";
 import chalk from "chalk";
@@ -150,12 +147,6 @@ export function getNodeConfig(
     allowBlocksWithSameTimestamp: config.allowBlocksWithSameTimestamp,
     enableTransientStorage: config.enableTransientStorage,
   };
-}
-
-export interface RawTraceCallbacks {
-  onStep?: (messageTrace: TracingStep) => Promise<void>;
-  onBeforeMessage?: (messageTrace: TracingMessage) => Promise<void>;
-  onAfterMessage?: (messageTrace: ExecutionResult) => Promise<void>;
 }
 
 class EdrProviderEventAdapter extends EventEmitter {}
