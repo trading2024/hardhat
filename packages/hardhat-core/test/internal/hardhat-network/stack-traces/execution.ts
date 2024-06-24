@@ -12,8 +12,8 @@ import {
   TracingConfig,
 } from "../../../../src/internal/hardhat-network/provider/node-types";
 import { EdrProviderWrapper } from "../../../../src/internal/hardhat-network/provider/provider";
-import { VMTracer } from "../../../../src/internal/hardhat-network/stack-traces/vm-tracer";
 import { LoggerConfig } from "../../../../src/internal/hardhat-network/provider/modules/logger";
+import { requireNapiRsModule } from "../../../../src/common/napi-rs";
 
 function toBuffer(x: Parameters<typeof toBytes>[0]) {
   return Buffer.from(toBytes(x));
@@ -105,7 +105,11 @@ export async function traceTransaction(
   provider: EdrProviderWrapper,
   txData: TxData
 ): Promise<MessageTrace> {
-  const vmTracer = new VMTracer();
+  const { VmTracer } = requireNapiRsModule(
+    "@nomicfoundation/edr"
+  ) as typeof import("@nomicfoundation/edr");
+
+  const vmTracer = new VmTracer();
   provider.setVmTracer(vmTracer);
 
   try {

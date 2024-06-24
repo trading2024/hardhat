@@ -15,6 +15,7 @@ import type {
   RawTrace,
   Response,
   SubscriptionEvent,
+  VmTracer,
 } from "@nomicfoundation/edr";
 import { Common } from "@nomicfoundation/ethereumjs-common";
 import chalk from "chalk";
@@ -52,7 +53,6 @@ import { FIRST_SOLC_VERSION_SUPPORTED } from "../stack-traces/constants";
 import { encodeSolidityStackTrace } from "../stack-traces/solidity-errors";
 import { SolidityStackTrace } from "../stack-traces/solidity-stack-trace";
 import { SolidityTracer } from "../stack-traces/solidityTracer";
-import { VMTracer } from "../stack-traces/vm-tracer";
 
 import { getPackageJson } from "../../util/packageInfo";
 import {
@@ -168,7 +168,7 @@ export class EdrProviderWrapper
   private _callOverrideCallback?: CallOverrideCallback;
 
   /** Used for internal stack trace tests. */
-  private _vmTracer?: VMTracer;
+  private _vmTracer?: VmTracer;
 
   private constructor(
     private readonly _provider: EdrProviderT,
@@ -367,6 +367,9 @@ export class EdrProviderWrapper
     if (needsTraces) {
       const rawTraces = responseObject.traces;
       for (const rawTrace of rawTraces) {
+        this._vmTracer?.observe(rawTrace);
+
+        // For other consumers in JS we need to marshall the entire trace over FFI
         const trace = rawTrace.trace();
 
         // beforeTx event
@@ -383,8 +386,6 @@ export class EdrProviderWrapper
                 edrTracingStepToMinimalInterpreterStep(traceItem)
               );
             }
-
-            this._vmTracer?.addStep(traceItem);
           }
           // afterMessage event
           else if ("executionResult" in traceItem) {
@@ -394,8 +395,6 @@ export class EdrProviderWrapper
                 edrTracingMessageResultToMinimalEVMResult(traceItem)
               );
             }
-
-            this._vmTracer?.addAfterMessage(traceItem.executionResult);
           }
           // beforeMessage event
           else {
@@ -405,8 +404,6 @@ export class EdrProviderWrapper
                 edrTracingMessageToMinimalMessage(traceItem)
               );
             }
-
-            this._vmTracer?.addBeforeMessage(traceItem);
           }
         }
 
@@ -473,7 +470,7 @@ export class EdrProviderWrapper
    *
    * Used for internal stack traces integration tests.
    */
-  public setVmTracer(vmTracer?: VMTracer) {
+  public setVmTracer(vmTracer?: VmTracer) {
     this._vmTracer = vmTracer;
   }
 
@@ -576,18 +573,12 @@ export class EdrProviderWrapper
   private async _rawTraceToSolidityStackTrace(
     rawTrace: RawTrace
   ): Promise<SolidityStackTrace | undefined> {
-    const vmTracer = new VMTracer();
+    const { VmTracer } = requireNapiRsModule(
+      "@nomicfoundation/edr"
+    ) as typeof import("@nomicfoundation/edr");
 
-    const trace = rawTrace.trace();
-    for (const traceItem of trace) {
-      if ("pc" in traceItem) {
-        vmTracer.addStep(traceItem);
-      } else if ("executionResult" in traceItem) {
-        vmTracer.addAfterMessage(traceItem.executionResult);
-      } else {
-        vmTracer.addBeforeMessage(traceItem);
-      }
-    }
+    const vmTracer = new VmTracer();
+    vmTracer.observe(rawTrace);
 
     let vmTrace = vmTracer.getLastTopLevelMessageTrace();
     const vmTracerError = vmTracer.getLastError();
