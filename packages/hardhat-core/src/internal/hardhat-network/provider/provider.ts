@@ -573,18 +573,12 @@ export class EdrProviderWrapper
   private async _rawTraceToSolidityStackTrace(
     rawTrace: RawTrace
   ): Promise<SolidityStackTrace | undefined> {
-    const vmTracer = new VMTracer();
+    const { VmTracer } = requireNapiRsModule(
+      "@nomicfoundation/edr"
+    ) as typeof import("@nomicfoundation/edr");
 
-    const trace = rawTrace.trace();
-    for (const traceItem of trace) {
-      if ("pc" in traceItem) {
-        vmTracer.addStep(traceItem);
-      } else if ("executionResult" in traceItem) {
-        vmTracer.addAfterMessage(traceItem.executionResult);
-      } else {
-        vmTracer.addBeforeMessage(traceItem);
-      }
-    }
+    const vmTracer = new VmTracer();
+    vmTracer.observe(rawTrace);
 
     let vmTrace = vmTracer.getLastTopLevelMessageTrace();
     const vmTracerError = vmTracer.getLastError();
