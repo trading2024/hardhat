@@ -202,7 +202,7 @@ importers:
         version: 4.0.1
       '@nomicfoundation/edr':
         specifier: ^0.4.0
-        version: 0.4.0
+        version: link:../../../edr/crates/edr_napi
       '@nomicfoundation/ethereumjs-common':
         specifier: 4.0.4
         version: 4.0.4
@@ -2331,38 +2331,6 @@ packages:
   '@nodelib/fs.walk@1.2.8':
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
-
-  '@nomicfoundation/edr-darwin-arm64@0.4.0':
-    resolution: {integrity: sha512-7+rraFk9tCqvfemv9Ita5vTlSBAeO/S5aDKOgGRgYt0JEKZlrX161nDW6UfzMPxWl9GOLEDUzCEaYuNmXseUlg==}
-    engines: {node: '>= 18'}
-
-  '@nomicfoundation/edr-darwin-x64@0.4.0':
-    resolution: {integrity: sha512-+Hrc0mP9L6vhICJSfyGo/2taOToy1AIzVZawO3lU8Lf7oDQXfhQ4UkZnkWAs9SVu1eUwHUGGGE0qB8644piYgg==}
-    engines: {node: '>= 18'}
-
-  '@nomicfoundation/edr-linux-arm64-gnu@0.4.0':
-    resolution: {integrity: sha512-4HUDMchNClQrVRfVTqBeSX92hM/3khCgpZkXP52qrnJPqgbdCxosOehlQYZ65wu0b/kaaZSyvACgvCLSQ5oSzQ==}
-    engines: {node: '>= 18'}
-
-  '@nomicfoundation/edr-linux-arm64-musl@0.4.0':
-    resolution: {integrity: sha512-D4J935ZRL8xfnP3zIFlCI9jXInJ0loDUkCTLeCEbOf2uuDumWDghKNQlF1itUS+EHaR1pFVBbuwqq8hVK0dASg==}
-    engines: {node: '>= 18'}
-
-  '@nomicfoundation/edr-linux-x64-gnu@0.4.0':
-    resolution: {integrity: sha512-6x7HPy+uN5Cb9N77e2XMmT6+QSJ+7mRbHnhkGJ8jm4cZvWuj2Io7npOaeHQ3YHK+TiQpTnlbkjoOIpEwpY3XZA==}
-    engines: {node: '>= 18'}
-
-  '@nomicfoundation/edr-linux-x64-musl@0.4.0':
-    resolution: {integrity: sha512-3HFIJSXgyubOiaN4MWGXx2xhTnhwlJk0PiSYNf9+L/fjBtcRkb2nM910ZJHTvqCb6OT98cUnaKuAYdXIW2amgw==}
-    engines: {node: '>= 18'}
-
-  '@nomicfoundation/edr-win32-x64-msvc@0.4.0':
-    resolution: {integrity: sha512-CP4GsllEfXEz+lidcGYxKe5rDJ60TM5/blB5z/04ELVvw6/CK9eLcYeku7HV0jvV7VE6dADYKSdQyUkvd0El+A==}
-    engines: {node: '>= 18'}
-
-  '@nomicfoundation/edr@0.4.0':
-    resolution: {integrity: sha512-T96DMSogO8TCdbKKctvxfsDljbhFOUKWc9fHJhSeUh71EEho2qR4951LKQF7t7UWEzguVYh/idQr5L/E3QeaMw==}
-    engines: {node: '>= 18'}
 
   '@nomicfoundation/ethereumjs-block@5.0.4':
     resolution: {integrity: sha512-AcyacJ9eX/uPEvqsPiB+WO1ymE+kyH48qGGiGV+YTojdtas8itUTW5dehDSOXEEItWGbbzEJ4PRqnQZlWaPvDw==}
@@ -8148,30 +8116,6 @@ snapshots:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.17.1
-
-  '@nomicfoundation/edr-darwin-arm64@0.4.0': {}
-
-  '@nomicfoundation/edr-darwin-x64@0.4.0': {}
-
-  '@nomicfoundation/edr-linux-arm64-gnu@0.4.0': {}
-
-  '@nomicfoundation/edr-linux-arm64-musl@0.4.0': {}
-
-  '@nomicfoundation/edr-linux-x64-gnu@0.4.0': {}
-
-  '@nomicfoundation/edr-linux-x64-musl@0.4.0': {}
-
-  '@nomicfoundation/edr-win32-x64-msvc@0.4.0': {}
-
-  '@nomicfoundation/edr@0.4.0':
-    dependencies:
-      '@nomicfoundation/edr-darwin-arm64': 0.4.0
-      '@nomicfoundation/edr-darwin-x64': 0.4.0
-      '@nomicfoundation/edr-linux-arm64-gnu': 0.4.0
-      '@nomicfoundation/edr-linux-arm64-musl': 0.4.0
-      '@nomicfoundation/edr-linux-x64-gnu': 0.4.0
-      '@nomicfoundation/edr-linux-x64-musl': 0.4.0
-      '@nomicfoundation/edr-win32-x64-msvc': 0.4.0
 
   '@nomicfoundation/ethereumjs-block@5.0.4':
     dependencies:
