@@ -1,12 +1,12 @@
 import { bytesToHex as bufferToHex } from "@nomicfoundation/ethereumjs-util";
 
-import { ContractFunction } from "@nomicfoundation/edr";
+import { ContractFunction, SourceLocation } from "@nomicfoundation/edr";
 
 import { AbiHelpers } from "../../util/abi-helpers";
 
 import { Opcode } from "./opcodes";
 
-export { ContractFunction };
+export { ContractFunction, SourceLocation };
 
 /* eslint-disable @nomicfoundation/hardhat-internal-rules/only-hardhat-error */
 
@@ -67,54 +67,6 @@ export class SourceFile {
     }
 
     return undefined;
-  }
-}
-
-export class SourceLocation {
-  private _line: number | undefined;
-
-  constructor(
-    public readonly file: SourceFile,
-    public readonly offset: number,
-    public readonly length: number
-  ) {}
-
-  public getStartingLineNumber(): number {
-    if (this._line === undefined) {
-      this._line = 1;
-
-      for (const c of this.file.content.slice(0, this.offset)) {
-        if (c === "\n") {
-          this._line += 1;
-        }
-      }
-    }
-
-    return this._line;
-  }
-
-  public getContainingFunction(): ContractFunction | undefined {
-    return this.file.getContainingFunction(this);
-  }
-
-  public contains(other: SourceLocation) {
-    if (this.file !== other.file) {
-      return false;
-    }
-
-    if (other.offset < this.offset) {
-      return false;
-    }
-
-    return other.offset + other.length <= this.offset + this.length;
-  }
-
-  public equals(other: SourceLocation) {
-    return (
-      this.file === other.file &&
-      this.offset === other.offset &&
-      this.length === other.length
-    );
   }
 }
 
