@@ -1,12 +1,16 @@
 import { bytesToHex as bufferToHex } from "@nomicfoundation/ethereumjs-util";
 
-import { ContractFunction, SourceLocation } from "@nomicfoundation/edr";
+import {
+  ContractFunction,
+  SourceLocation,
+  SourceFile,
+} from "@nomicfoundation/edr";
 
 import { AbiHelpers } from "../../util/abi-helpers";
 
 import { Opcode } from "./opcodes";
 
-export { ContractFunction, SourceLocation };
+export { ContractFunction, SourceLocation, SourceFile };
 
 /* eslint-disable @nomicfoundation/hardhat-internal-rules/only-hardhat-error */
 
@@ -37,37 +41,6 @@ export enum ContractFunctionVisibility {
   INTERNAL,
   PUBLIC,
   EXTERNAL,
-}
-
-export class SourceFile {
-  private readonly _functions: ContractFunction[] = [];
-
-  constructor(
-    public readonly sourceName: string,
-    public readonly content: string
-  ) {}
-
-  public addFunction(func: ContractFunction) {
-    if (func.location.file !== this) {
-      throw new Error("Trying to add a function from another file");
-    }
-
-    this._functions.push(func);
-  }
-
-  public getContainingFunction(
-    location: SourceLocation
-  ): ContractFunction | undefined {
-    // TODO: Optimize this with a binary search or an internal tree
-
-    for (const func of this._functions) {
-      if (func.location.contains(location)) {
-        return func;
-      }
-    }
-
-    return undefined;
-  }
 }
 
 export class Contract {
