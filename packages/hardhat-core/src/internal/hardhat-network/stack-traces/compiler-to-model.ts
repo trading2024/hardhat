@@ -243,22 +243,22 @@ function processFunctionDefinitionAstNode(
 
   const paramTypes = matchingFunctionAbi?.inputs?.map((input) => input.type);
 
-  const cf = new ContractFunction(
-    functionDefinitionNode.name,
-    functionType,
-    functionLocation,
+  const contractFunc = {
+    name: functionDefinitionNode.name,
+    type: functionType,
+    location: functionLocation,
     contract,
     visibility,
-    functionDefinitionNode.stateMutability === "payable",
+    isPayable: functionDefinitionNode.stateMutability === "payable",
     selector,
-    paramTypes
-  );
+    paramTypes,
+  };
 
   if (contract !== undefined) {
-    contract.addLocalFunction(cf);
+    contract.addLocalFunction(contractFunc);
   }
 
-  file.addFunction(cf);
+  file.addFunction(contractFunc);
 }
 
 function processModifierDefinitionAstNode(
@@ -272,15 +272,15 @@ function processModifierDefinitionAstNode(
     fileIdToSourceFile
   )!;
 
-  const cf = new ContractFunction(
-    modifierDefinitionNode.name,
-    ContractFunctionType.MODIFIER,
-    functionLocation,
-    contract
-  );
+  const contractFunc: ContractFunction = {
+    name: modifierDefinitionNode.name,
+    type: ContractFunctionType.MODIFIER,
+    location: functionLocation,
+    contract,
+  };
 
-  contract.addLocalFunction(cf);
-  file.addFunction(cf);
+  contract.addLocalFunction(contractFunc);
+  file.addFunction(contractFunc);
 }
 
 function canonicalAbiTypeForElementaryOrUserDefinedTypes(keyType: any): any {
@@ -354,16 +354,18 @@ function processVariableDeclarationAstNode(
 
   const paramTypes = getterAbi?.inputs?.map((input) => input.type);
 
-  const cf = new ContractFunction(
-    variableDeclarationNode.name,
-    ContractFunctionType.GETTER,
-    functionLocation,
+  const cf: ContractFunction = {
+    name: variableDeclarationNode.name,
+    type: ContractFunctionType.GETTER,
+    location: functionLocation,
     contract,
     visibility,
-    false, // Getters aren't payable
-    getPublicVariableSelectorFromDeclarationAstNode(variableDeclarationNode),
-    paramTypes
-  );
+    isPayable: false, // Getters aren't payable
+    selector: getPublicVariableSelectorFromDeclarationAstNode(
+      variableDeclarationNode
+    ),
+    paramTypes,
+  };
 
   contract.addLocalFunction(cf);
   file.addFunction(cf);

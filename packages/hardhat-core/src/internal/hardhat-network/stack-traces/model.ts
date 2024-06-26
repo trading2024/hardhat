@@ -1,8 +1,12 @@
 import { bytesToHex as bufferToHex } from "@nomicfoundation/ethereumjs-util";
 
+import { ContractFunction } from "@nomicfoundation/edr";
+
 import { AbiHelpers } from "../../util/abi-helpers";
 
 import { Opcode } from "./opcodes";
+
+export { ContractFunction };
 
 /* eslint-disable @nomicfoundation/hardhat-internal-rules/only-hardhat-error */
 
@@ -241,32 +245,6 @@ export class Contract {
     functionToCorrect.selector = selector;
     this._selectorHexToFunction.set(bufferToHex(selector), functionToCorrect);
     return true;
-  }
-}
-
-export class ContractFunction {
-  constructor(
-    public readonly name: string,
-    public readonly type: ContractFunctionType,
-    public readonly location: SourceLocation,
-    public readonly contract?: Contract,
-    public readonly visibility?: ContractFunctionVisibility,
-    public readonly isPayable?: boolean,
-    public selector?: Uint8Array,
-    public readonly paramTypes?: any[]
-  ) {
-    if (contract !== undefined && !contract.location.contains(location)) {
-      throw new Error("Incompatible contract and function location");
-    }
-  }
-
-  public isValidCalldata(calldata: Uint8Array): boolean {
-    if (this.paramTypes === undefined) {
-      // if we don't know the param types, we just assume that the call is valid
-      return true;
-    }
-
-    return AbiHelpers.isValidCalldata(this.paramTypes, calldata);
   }
 }
 
