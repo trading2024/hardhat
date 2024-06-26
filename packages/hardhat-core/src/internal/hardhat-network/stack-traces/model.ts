@@ -4,13 +4,21 @@ import {
   ContractFunction,
   SourceLocation,
   SourceFile,
+  ContractFunctionType,
+  ContractFunctionVisibility,
 } from "@nomicfoundation/edr";
 
 import { AbiHelpers } from "../../util/abi-helpers";
 
 import { Opcode } from "./opcodes";
 
-export { ContractFunction, SourceLocation, SourceFile };
+export {
+  ContractFunction,
+  SourceLocation,
+  SourceFile,
+  ContractFunctionType,
+  ContractFunctionVisibility,
+};
 
 /* eslint-disable @nomicfoundation/hardhat-internal-rules/only-hardhat-error */
 
@@ -24,23 +32,6 @@ export enum JumpType {
 export enum ContractType {
   CONTRACT,
   LIBRARY,
-}
-
-export enum ContractFunctionType {
-  CONSTRUCTOR,
-  FUNCTION,
-  FALLBACK,
-  RECEIVE,
-  GETTER,
-  MODIFIER,
-  FREE_FUNCTION,
-}
-
-export enum ContractFunctionVisibility {
-  PRIVATE,
-  INTERNAL,
-  PUBLIC,
-  EXTERNAL,
 }
 
 export class Contract {
