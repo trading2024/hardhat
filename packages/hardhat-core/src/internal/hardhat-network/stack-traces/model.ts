@@ -40,7 +40,7 @@ export enum ContractFunctionVisibility {
 }
 
 export class SourceFile {
-  public readonly functions: ContractFunction[] = [];
+  private readonly _functions: ContractFunction[] = [];
 
   constructor(
     public readonly sourceName: string,
@@ -52,7 +52,7 @@ export class SourceFile {
       throw new Error("Trying to add a function from another file");
     }
 
-    this.functions.push(func);
+    this._functions.push(func);
   }
 
   public getContainingFunction(
@@ -60,7 +60,7 @@ export class SourceFile {
   ): ContractFunction | undefined {
     // TODO: Optimize this with a binary search or an internal tree
 
-    for (const func of this.functions) {
+    for (const func of this._functions) {
       if (func.location.contains(location)) {
         return func;
       }
