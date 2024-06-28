@@ -7,9 +7,10 @@ import {
   ContractFunctionType,
   ContractFunctionVisibility,
   CustomError,
+  Instruction,
+  JumpType,
+  ImmutableReference,
 } from "@nomicfoundation/edr";
-
-import { Opcode } from "./opcodes";
 
 export {
   ContractFunction,
@@ -18,16 +19,11 @@ export {
   ContractFunctionType,
   ContractFunctionVisibility,
   CustomError,
+  Instruction,
+  JumpType,
 };
 
 /* eslint-disable @nomicfoundation/hardhat-internal-rules/only-hardhat-error */
-
-export enum JumpType {
-  NOT_JUMP,
-  INTO_FUNCTION,
-  OUTOF_FUNCTION,
-  INTERNAL_JUMP,
-}
 
 export enum ContractType {
   CONTRACT,
@@ -162,22 +158,6 @@ export class Contract {
     this._selectorHexToFunction.set(bufferToHex(selector), functionToCorrect);
     return true;
   }
-}
-
-export class Instruction {
-  constructor(
-    public readonly pc: number,
-    public readonly opcode: Opcode,
-    public readonly jumpType: JumpType,
-    // Used only for debugging
-    public readonly pushData?: Buffer,
-    public readonly location?: SourceLocation
-  ) {}
-}
-
-interface ImmutableReference {
-  start: number;
-  length: number;
 }
 
 export class Bytecode {
