@@ -6,9 +6,8 @@ import {
   SourceFile,
   ContractFunctionType,
   ContractFunctionVisibility,
+  CustomError,
 } from "@nomicfoundation/edr";
-
-import { AbiHelpers } from "../../util/abi-helpers";
 
 import { Opcode } from "./opcodes";
 
@@ -18,6 +17,7 @@ export {
   SourceFile,
   ContractFunctionType,
   ContractFunctionVisibility,
+  CustomError,
 };
 
 /* eslint-disable @nomicfoundation/hardhat-internal-rules/only-hardhat-error */
@@ -162,27 +162,6 @@ export class Contract {
     this._selectorHexToFunction.set(bufferToHex(selector), functionToCorrect);
     return true;
   }
-}
-
-export class CustomError {
-  /**
-   * Return a CustomError from the given ABI information: the name
-   * of the error and its inputs. Returns undefined if it can't build
-   * the CustomError.
-   */
-  public static fromABI(name: string, inputs: any[]): CustomError | undefined {
-    const selector = AbiHelpers.computeSelector(name, inputs);
-
-    if (selector !== undefined) {
-      return new CustomError(selector, name, inputs);
-    }
-  }
-
-  private constructor(
-    public readonly selector: Uint8Array,
-    public readonly name: string,
-    public readonly paramTypes: any[]
-  ) {}
 }
 
 export class Instruction {
