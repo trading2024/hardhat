@@ -280,13 +280,6 @@ const communityPlugins: IPlugin[] = [
     tags: ["solidity", "storage"],
   },
   {
-    name: "hardhat-change-network",
-    author: "David Mihal",
-    authorUrl: "https://github.com/dmihal",
-    description: "Allows changing the current network in Hardhat.",
-    tags: ["Testing"],
-  },
-  {
     name: "hardhat-packager",
     author: "Paul Razvan Berg",
     authorUrl: "https://github.com/paulrberg",
@@ -987,6 +980,29 @@ const communityPlugins: IPlugin[] = [
     authorUrl: "https://distributedlab.com/",
     description: "Hardhat plugin to get interfaceid",
     tags: ["ABI", "interfaceid", "Solarity"],
+  },
+  {
+    name: "@yankeguo/hardhat-trezor",
+    author: "Yanke G.",
+    authorUrl: "https://yankeguo.com",
+    description: "Hardhat plugin for the Trezor hardware wallet",
+    tags: ["Trezor", "Wallet"],
+  },
+  {
+    name: "hardhat-switch-network",
+    author: "0xNeshi",
+    authorUrl: "https://github.com/0xNeshi",
+    description:
+      "Hardhat plugin for enabling on-the-fly network switching within your Hardhat scripts and tasks",
+    tags: ["Tasks", "Scripts", "Testing"],
+  },
+  {
+    name: "@medga/hardhat-clone",
+    author: "The MEDGA Team",
+    authorUrl: "https://medga.org",
+    description:
+      "Clone an on-chain contract and integrate into your Hardhat project",
+    tags: ["etherscan", "clone", "verified contract"],
   },
 ];
 

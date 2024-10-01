@@ -27,6 +27,7 @@ import {
   UnexpectedNumberOfFilesError,
   VerificationAPIUnexpectedMessageError,
   ContractAlreadyVerifiedError,
+  NetworkRequestError,
 } from "../errors";
 import { Etherscan } from "../etherscan";
 import { Bytecode } from "../solc/bytecode";
@@ -102,7 +103,15 @@ subtask(TASK_VERIFY_ETHERSCAN)
       chainConfig
     );
 
-    const isVerified = await etherscan.isVerified(address);
+    let isVerified = false;
+    try {
+      isVerified = await etherscan.isVerified(address);
+    } catch (err) {
+      if (!force || err instanceof NetworkRequestError) {
+        throw err;
+      }
+      // https://github.com/blockscout/blockscout/issues/9001
+    }
     if (!force && isVerified) {
       const contractURL = etherscan.getContractUrl(address);
       console.log(`The contract ${address} has already been verified on the block explorer. If you're trying to verify a partially verified contract, please use the --force flag.
@@ -336,7 +345,8 @@ for verification on the block explorer. Waiting for verification result...
       if (verificationStatus.isSuccess()) {
         const contractURL = verificationInterface.getContractUrl(address);
         console.log(`Successfully verified contract ${contractInformation.contractName} on the block explorer.
-${contractURL}\n`);
+${contractURL}
+`);
       }
 
       return {

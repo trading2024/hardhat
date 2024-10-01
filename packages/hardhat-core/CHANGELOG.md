@@ -1,5 +1,50 @@
 # hardhat
 
+## 2.22.12
+
+### Patch Changes
+
+- 5fb3095: Adapted Hardhat to trace Solidity logic on EDR. This resulted in a 10% performance improvement for most workloads.
+
+## 2.22.11
+
+### Patch Changes
+
+- 601d543: Fixed a problem with provider events when `provider.init` was explicitly called before the first request.
+- 224159e: Added support for solc versions 0.8.25, 0.8.26, and 0.8.27
+- b43ed78: Added link to Ignition docs in sample projects
+- 07e0a9c: Hardhat node can now handle large response objects by streaming them.
+- 12d1980: Upgrade chokidar
+
+## 2.22.10
+
+### Patch Changes
+
+- 409e99f: Fixed `debug` logs in Hardhat Network initialization process.
+- 46cd7a1: Removed the experimentalAddHardhatNetworkMessageTraceHook API
+
+## 2.22.9
+
+### Patch Changes
+
+- 6771f00: Do not send `http_setLedgerOutputEnabled` messages beyond the HTTP Provider to prevent unwanted warnings in the logs of the local hardhat node
+
+## 2.22.8
+
+### Patch Changes
+
+- f5d5d15: Fixed an issue with `debug_traceTransaction` when large responses were generated
+- 31d9d77: Upgraded EDR to v0.5.2
+
+## 2.22.7
+
+### Patch Changes
+
+- f944cd5: Added an `enableRip7212` optional flag to the Hardhat Network config that enables [RIP-7212 (Precompile for secp256r1 Curve Support)](https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md).
+- f6ddc92: Add `debug` logs to Hardhat Network initialization process.
+- 6c943bb: Fix message for error HH206
+- f944cd5: Bumped EDR to [v0.5.0](https://github.com/NomicFoundation/edr/releases/tag/%40nomicfoundation%2Fedr%400.5.0).
+
 ## 2.22.6
 
 ### Patch Changes

@@ -1,5 +1,23 @@
 # @nomicfoundation/hardhat-verify
 
+## 2.0.11
+
+### Patch Changes
+
+- 913b5a1: Added Blockscout as a verification provider
+
+## 2.0.10
+
+### Patch Changes
+
+- efa905d: Fix for corrupted Hardhat peer dependency version from pnpm.
+
+## 2.0.9
+
+### Patch Changes
+
+- 88e57fa: Make the `--force` flag override the check of any existing verification, even in the presence of errors.
+
 ## 2.0.8
 
 ### Patch Changes

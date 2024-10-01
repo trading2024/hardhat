@@ -31,7 +31,7 @@ export async function instantiateProvider(
   tracingConfig: TracingConfig
 ): Promise<EdrProviderWrapper> {
   const config = {
-    hardfork: "shanghai",
+    hardfork: "cancun",
     chainId: 1,
     networkId: 1,
     blockGasLimit: 10_000_000,
@@ -53,6 +53,7 @@ export async function instantiateProvider(
     coinbase: "0x0000000000000000000000000000000000000000",
     initialBaseFeePerGas: 0,
     enableTransientStorage: false,
+    enableRip7212: false,
   };
 
   const provider = await EdrProviderWrapper.create(
