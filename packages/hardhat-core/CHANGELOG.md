@@ -1,5 +1,15 @@
 # hardhat
 
+## 2.23.0
+
+### Minor Changes
+
+- 3df95d3: Remove support for `console.log` selectors that wrongly use "(u)int" type aliases in the selector calculation
+
+### Patch Changes
+
+- 4c1bcfc: Fixed minor bugs in the newly ported Solidity tracing logic
+
 ## 2.22.12
 
 ### Patch Changes
